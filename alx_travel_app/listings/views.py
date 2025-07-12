@@ -3,6 +3,7 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from .models import Listing, Booking, Payment
+from .tasks import send_booking_email 
 from .serializers import ListingSerializer, BookingSerializer, PaymentSerializer
 import os
 import requests
@@ -25,6 +26,18 @@ class ListingViewSet(viewsets.ModelViewSet):
 class BookingViewSet(viewsets.ModelViewSet):
     queryset = Booking.objects.all()
     serializer_class = BookingSerializer
+
+
+    def perform_create(self, serializer):
+        booking = serializer.save()
+
+        # Compose email
+        subject = 'Booking Confirmation'
+        message = f"Hi {booking.user.first_name}, your booking for '{booking.listing.title}' has been confirmed!"
+        recipient_email = booking.user.email
+
+        # Trigger email via Celery
+        send_booking_email.delay(subject, message, recipient_email)
 
     @action(detail=True, methods=['post'], url_path='initiate-payment')
     def initiate_payment(self, request, pk=None):

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Listing, Booking
+from .models import Listing, Booking, Payment
 
 class ListingSerializer(serializers.ModelSerializer):
     class Meta:
@@ -18,3 +18,8 @@ class BookingSerializer(serializers.ModelSerializer):
 
     def get_total_price(self, obj):
         return obj.total_price()
+
+class PaymentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Payment
+        fields = '__all__'  # or a list of fields you want to expose
